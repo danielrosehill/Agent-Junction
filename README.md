@@ -3,6 +3,7 @@
 # Agent Junction
 
 [![npm version](https://img.shields.io/npm/v/agent-junction)](https://www.npmjs.com/package/agent-junction)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-Repo%20Index-blue?style=flat-square&logo=github)](https://github.com/danielrosehill/Claude-Code-Repos-Index)
 
 An MCP server that lets Claude Code instances communicate directly via an ephemeral, encrypted peer-to-peer message bus. Works on localhost or across your LAN.
 
@@ -145,3 +146,7 @@ See [`planning/`](planning/) for the full specification and Mermaid architecture
 ## License
 
 MIT
+
+---
+
+For more Claude Code projects, visit my [Claude Code Repos Index](https://github.com/danielrosehill/Claude-Code-Repos-Index).
