@@ -1,0 +1,44 @@
+{
+  "name": "claude-junction",
+  "version": "0.1.0",
+  "description": "Localhost MCP server for ephemeral, encrypted peer-to-peer messaging between Claude Code instances",
+  "author": "Daniel Rosehill",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "claude-junction": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.17",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "claude-code",
+    "p2p",
+    "messaging",
+    "localhost"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}
