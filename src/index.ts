@@ -9,7 +9,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { Junction } from "./junction.js";
 import { registerTools } from "./tools.js";
-import type { JunctionConfig, KnownHost } from "./types.js";
+import type { JunctionConfig, JunctionEvent, KnownHost } from "./types.js";
 
 function parseKnownHosts(raw: string): KnownHost[] {
   if (!raw.trim()) return [];
@@ -68,6 +68,56 @@ app.get("/health", (_req: Request, res: Response) => {
     mode: isLan ? "lan" : "localhost",
     activePeers: junction.getActivePeerCount(),
     uptime: Math.floor((Date.now() - startTime) / 1000),
+  });
+});
+
+// Status endpoint — full peer list with metadata
+app.get("/status", (_req: Request, res: Response) => {
+  const isLan = config.host === "0.0.0.0";
+  res.json({
+    status: "ok",
+    mode: isLan ? "lan" : "localhost",
+    activePeers: junction.getActivePeerCount(),
+    uptime: Math.floor((Date.now() - startTime) / 1000),
+    peers: junction.getStatus(),
+  });
+});
+
+// SSE event stream — real-time junction activity
+app.get("/events", (req: Request, res: Response) => {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+
+  // Send initial snapshot
+  const snapshot = {
+    activePeers: junction.getActivePeerCount(),
+    uptime: Math.floor((Date.now() - startTime) / 1000),
+    peers: junction.getStatus(),
+  };
+  res.write(`event: snapshot\ndata: ${JSON.stringify(snapshot)}\n\n`);
+
+  // Forward junction events
+  const handler = (event: JunctionEvent) => {
+    res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+  };
+
+  junction.events.on("peer_joined", handler);
+  junction.events.on("peer_left", handler);
+  junction.events.on("message_sent", handler);
+
+  // Heartbeat every 15s
+  const heartbeat = setInterval(() => {
+    res.write(`: heartbeat\n\n`);
+  }, 15000);
+
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    junction.events.off("peer_joined", handler);
+    junction.events.off("peer_left", handler);
+    junction.events.off("message_sent", handler);
   });
 });
 

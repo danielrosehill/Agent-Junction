@@ -1,9 +1,12 @@
+import { EventEmitter } from "node:events";
 import { generateKey, encrypt, decrypt, zeroKey } from "./crypto.js";
 import { generateAlias } from "./aliases.js";
 import type {
   JunctionConfig,
+  JunctionEvent,
   PeerSession,
   PeerInfo,
+  PeerStatus,
   PeerContext,
   DecodedMessage,
   RegisterResult,
@@ -15,6 +18,7 @@ export class Junction {
   private sessionByAlias = new Map<string, string>();
   private sweepTimer: ReturnType<typeof setInterval> | null = null;
   private config: JunctionConfig;
+  public readonly events = new EventEmitter();
 
   constructor(config: JunctionConfig) {
     this.config = config;
@@ -55,6 +59,14 @@ export class Junction {
     this.sessions.set(sessionId, session);
     this.aliasBySession.set(sessionId, alias);
     this.sessionByAlias.set(alias, sessionId);
+
+    const event: JunctionEvent = {
+      type: "peer_joined",
+      timestamp: new Date().toISOString(),
+      alias,
+      context,
+    };
+    this.events.emit("peer_joined", event);
 
     return {
       alias,
@@ -115,6 +127,14 @@ export class Junction {
       authTag,
       timestamp: new Date(),
     });
+
+    const event: JunctionEvent = {
+      type: "message_sent",
+      timestamp: new Date().toISOString(),
+      fromAlias: sender.alias,
+      toAlias: targetAlias,
+    };
+    this.events.emit("message_sent", event);
   }
 
   readMessages(sessionId: string): DecodedMessage[] {
@@ -140,6 +160,13 @@ export class Junction {
     const session = this.sessions.get(sessionId);
     if (!session) return;
 
+    const event: JunctionEvent = {
+      type: "peer_left",
+      timestamp: new Date().toISOString(),
+      alias: session.alias,
+    };
+    this.events.emit("peer_left", event);
+
     // Zero the encryption key
     zeroKey(session.encryptionKey);
 
@@ -147,6 +174,20 @@ export class Junction {
     this.sessionByAlias.delete(session.alias);
     this.aliasBySession.delete(sessionId);
     this.sessions.delete(sessionId);
+  }
+
+  getStatus(): PeerStatus[] {
+    const peers: PeerStatus[] = [];
+    for (const session of this.sessions.values()) {
+      peers.push({
+        alias: session.alias,
+        connectedAt: session.connectedAt.toISOString(),
+        lastActivity: session.lastActivity.toISOString(),
+        context: session.context,
+        inboxSize: session.inbox.length,
+      });
+    }
+    return peers;
   }
 
   getActivePeerCount(): number {

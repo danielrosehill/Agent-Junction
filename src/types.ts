@@ -54,3 +54,20 @@ export interface RegisterResult {
   peerCount: number;
   context?: PeerContext;
 }
+
+export interface JunctionEvent {
+  type: "peer_joined" | "peer_left" | "message_sent";
+  timestamp: string;
+  alias?: string;
+  fromAlias?: string;
+  toAlias?: string;
+  context?: PeerContext;
+}
+
+export interface PeerStatus {
+  alias: string;
+  connectedAt: string;
+  lastActivity: string;
+  context?: PeerContext;
+  inboxSize: number;
+}
