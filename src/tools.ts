@@ -11,10 +11,15 @@ export function registerTools(
 ): void {
   server.tool(
     "register",
-    "Join the Agent Junction. Returns your unique alias and how many other peers are connected.",
-    {},
-    async () => {
-      const result = junction.register(sessionId);
+    "Join the Agent Junction. Optionally provide context about what you're working on so other peers can discover you by role/task. Returns your unique alias and how many other peers are connected.",
+    {
+      repo: z.string().optional().describe("The repository or project you are working in"),
+      task: z.string().optional().describe("What you are currently doing"),
+      role: z.string().optional().describe("Your role in a multi-agent workflow (e.g. 'researcher', 'orchestrator', 'reviewer')"),
+    },
+    async ({ repo, task, role }) => {
+      const context = (repo || task || role) ? { repo, task, role } : undefined;
+      const result = junction.register(sessionId, context);
       return {
         content: [
           {
@@ -134,6 +139,54 @@ export function registerTools(
           {
             type: "text" as const,
             text: JSON.stringify(hosts, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  server.tool(
+    "wait_for_peer",
+    "Block until at least one other peer connects to the Junction, or until timeout. Useful when a spawned agent needs to wait for its parent to register before exchanging messages.",
+    {
+      timeout_seconds: z.number().optional().describe("Max seconds to wait (default 30, max 120)"),
+      expected_role: z.string().optional().describe("If set, only match peers with this role in their context"),
+    },
+    async ({ timeout_seconds, expected_role }) => {
+      const timeout = Math.min(timeout_seconds ?? 30, 120) * 1000;
+      const start = Date.now();
+      const pollInterval = 1000;
+
+      while (Date.now() - start < timeout) {
+        try {
+          const peers = junction.listPeers(sessionId);
+          const matched = expected_role
+            ? peers.filter((p) => p.context?.role === expected_role)
+            : peers;
+          if (matched.length > 0) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: JSON.stringify({ found: true, peers: matched }, null, 2),
+                },
+              ],
+            };
+          }
+        } catch (e) {
+          return {
+            content: [{ type: "text" as const, text: `Error: ${(e as Error).message}` }],
+            isError: true,
+          };
+        }
+        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+      }
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ found: false, reason: "timeout", waited_seconds: Math.floor((Date.now() - start) / 1000) }),
           },
         ],
       };

@@ -4,6 +4,7 @@ import type {
   JunctionConfig,
   PeerSession,
   PeerInfo,
+  PeerContext,
   DecodedMessage,
   RegisterResult,
 } from "./types.js";
@@ -23,15 +24,17 @@ export class Junction {
     );
   }
 
-  register(sessionId: string): RegisterResult {
-    // If already registered, return existing info
+  register(sessionId: string, context?: PeerContext): RegisterResult {
+    // If already registered, update context and return existing info
     const existing = this.sessions.get(sessionId);
     if (existing) {
       existing.lastActivity = new Date();
+      if (context) existing.context = context;
       return {
         alias: existing.alias,
         sessionId,
         peerCount: this.sessions.size - 1,
+        context: existing.context,
       };
     }
 
@@ -46,6 +49,7 @@ export class Junction {
       inbox: [],
       connectedAt: new Date(),
       lastActivity: new Date(),
+      context,
     };
 
     this.sessions.set(sessionId, session);
@@ -56,6 +60,7 @@ export class Junction {
       alias,
       sessionId,
       peerCount: this.sessions.size - 1,
+      context,
     };
   }
 
@@ -72,6 +77,7 @@ export class Junction {
         peers.push({
           alias: peer.alias,
           connectedAt: peer.connectedAt.toISOString(),
+          context: peer.context,
         });
       }
     }

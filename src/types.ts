@@ -19,6 +19,13 @@ export interface PeerSession {
   inbox: EncryptedMessage[];
   connectedAt: Date;
   lastActivity: Date;
+  context?: PeerContext;
+}
+
+export interface PeerContext {
+  repo?: string;
+  task?: string;
+  role?: string;
 }
 
 export interface EncryptedMessage {
@@ -32,6 +39,7 @@ export interface EncryptedMessage {
 export interface PeerInfo {
   alias: string;
   connectedAt: string;
+  context?: PeerContext;
 }
 
 export interface DecodedMessage {
@@ -44,4 +52,5 @@ export interface RegisterResult {
   alias: string;
   sessionId: string;
   peerCount: number;
+  context?: PeerContext;
 }
