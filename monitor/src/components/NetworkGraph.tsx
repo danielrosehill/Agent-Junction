@@ -14,14 +14,37 @@ const ROLE_COLORS: Record<string, string> = {
   "handover-receiver": "#06b6d4",
 };
 
-const DEFAULT_NODE_COLOR = "#2dd4bf";
-const ARC_COLOR = "#38bdf8";
-const BG_COLOR = "#0d1117";
-const TEXT_COLOR = "#e6edf3";
-const SUBTLE_COLOR = "#484f58";
+interface ThemeColors {
+  bg: string;
+  grid: string;
+  text: string;
+  subtle: string;
+  hub: string;
+  arc: string;
+  defaultNode: string;
+}
 
-// Junction hub — the central node
-const HUB_COLOR = "#8b5cf6";
+const THEMES: Record<string, ThemeColors> = {
+  light: {
+    bg: "#f6f8fa",
+    grid: "#e8ecf0",
+    text: "#1f2328",
+    subtle: "#656d76",
+    hub: "#7c3aed",
+    arc: "#0284c7",
+    defaultNode: "#0d9488",
+  },
+  dark: {
+    bg: "#0d1117",
+    grid: "#161b22",
+    text: "#e6edf3",
+    subtle: "#484f58",
+    hub: "#8b5cf6",
+    arc: "#38bdf8",
+    defaultNode: "#2dd4bf",
+  },
+};
+
 const HUB_RADIUS = 22;
 
 interface Props {
@@ -32,6 +55,7 @@ interface Props {
   height: number;
   selectedPeer: string | null;
   onSelectPeer: (alias: string | null) => void;
+  theme: "light" | "dark";
 }
 
 export default function NetworkGraph({
@@ -42,6 +66,7 @@ export default function NetworkGraph({
   height,
   selectedPeer,
   onSelectPeer,
+  theme,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
@@ -49,8 +74,8 @@ export default function NetworkGraph({
   const getNodeColor = useCallback((peer: PeerStatus) => {
     const role = peer.context?.role;
     if (role && ROLE_COLORS[role]) return ROLE_COLORS[role];
-    return DEFAULT_NODE_COLOR;
-  }, []);
+    return THEMES[theme].defaultNode;
+  }, [theme]);
 
   // Click detection
   const handleClick = useCallback(
@@ -79,16 +104,18 @@ export default function NetworkGraph({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const colors = THEMES[theme];
+
     function draw() {
       const now = performance.now();
       ctx!.clearRect(0, 0, width, height);
 
       // Background
-      ctx!.fillStyle = BG_COLOR;
+      ctx!.fillStyle = colors.bg;
       ctx!.fillRect(0, 0, width, height);
 
       // Subtle grid
-      ctx!.strokeStyle = "#161b22";
+      ctx!.strokeStyle = colors.grid;
       ctx!.lineWidth = 1;
       for (let x = 0; x < width; x += 40) {
         ctx!.beginPath();
@@ -109,14 +136,14 @@ export default function NetworkGraph({
       // Draw hub (junction center)
       ctx!.beginPath();
       ctx!.arc(cx, cy, HUB_RADIUS, 0, Math.PI * 2);
-      ctx!.fillStyle = HUB_COLOR + "30";
+      ctx!.fillStyle = colors.hub + "30";
       ctx!.fill();
-      ctx!.strokeStyle = HUB_COLOR;
+      ctx!.strokeStyle = colors.hub;
       ctx!.lineWidth = 2;
       ctx!.stroke();
 
       // Hub label
-      ctx!.fillStyle = HUB_COLOR;
+      ctx!.fillStyle = colors.hub;
       ctx!.font = "10px monospace";
       ctx!.textAlign = "center";
       ctx!.fillText("JUNCTION", cx, cy + 4);
@@ -128,7 +155,7 @@ export default function NetworkGraph({
         ctx!.beginPath();
         ctx!.arc(cx, cy, pulseR, 0, Math.PI * 2);
         ctx!.strokeStyle =
-          HUB_COLOR + Math.round((1 - pulsePhase) * 80).toString(16).padStart(2, "0");
+          colors.hub + Math.round((1 - pulsePhase) * 80).toString(16).padStart(2, "0");
         ctx!.lineWidth = 2;
         ctx!.stroke();
       }
@@ -138,7 +165,7 @@ export default function NetworkGraph({
         ctx!.beginPath();
         ctx!.moveTo(cx, cy);
         ctx!.lineTo(pos.x, pos.y);
-        ctx!.strokeStyle = SUBTLE_COLOR + "40";
+        ctx!.strokeStyle = colors.subtle + "40";
         ctx!.lineWidth = 1;
         ctx!.setLineDash([4, 8]);
         ctx!.stroke();
@@ -169,7 +196,7 @@ export default function NetworkGraph({
         // Curve through the hub
         ctx!.quadraticCurveTo(cx, cy, toPos.x, toPos.y);
         ctx!.strokeStyle =
-          ARC_COLOR +
+          colors.arc +
           Math.round(alpha * 200)
             .toString(16)
             .padStart(2, "0");
@@ -190,7 +217,7 @@ export default function NetworkGraph({
         ctx!.beginPath();
         ctx!.arc(px, py, 5, 0, Math.PI * 2);
         ctx!.fillStyle = "#ffffff";
-        ctx!.shadowColor = ARC_COLOR;
+        ctx!.shadowColor = colors.arc;
         ctx!.shadowBlur = 12;
         ctx!.fill();
         ctx!.shadowBlur = 0;
@@ -245,7 +272,7 @@ export default function NetworkGraph({
         ctx!.shadowBlur = 0;
 
         // Alias label
-        ctx!.fillStyle = TEXT_COLOR;
+        ctx!.fillStyle = colors.text;
         ctx!.font = "bold 11px monospace";
         ctx!.textAlign = "center";
         ctx!.fillText(alias, pos.x, pos.y + 4);
@@ -253,7 +280,7 @@ export default function NetworkGraph({
         // Role badge below
         const role = peer.context?.role;
         if (role) {
-          ctx!.fillStyle = SUBTLE_COLOR;
+          ctx!.fillStyle = colors.subtle;
           ctx!.font = "9px monospace";
           ctx!.fillText(role, pos.x, pos.y + NODE_RADIUS + 14);
         }
@@ -261,7 +288,7 @@ export default function NetworkGraph({
 
       // "No peers" state
       if (peers.size === 0) {
-        ctx!.fillStyle = SUBTLE_COLOR;
+        ctx!.fillStyle = colors.subtle;
         ctx!.font = "14px monospace";
         ctx!.textAlign = "center";
         ctx!.fillText(
@@ -284,6 +311,7 @@ export default function NetworkGraph({
     height,
     selectedPeer,
     getNodeColor,
+    theme,
   ]);
 
   return (

@@ -1,5 +1,9 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage } from "electron";
-import * as path from "path";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -18,7 +22,7 @@ function createWindow() {
     title: "Agent Junction Monitor",
     backgroundColor: "#0d1117",
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
     },

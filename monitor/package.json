@@ -12,7 +12,7 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && tsc -p electron/tsconfig.json",
+    "build": "vite build && tsc -p electron/tsconfig.json && cp electron/preload.cjs dist-electron/preload.cjs",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "npm run build && electron-builder",
     "preview": "vite preview"
@@ -34,15 +34,19 @@
   },
   "build": {
     "appId": "com.agentjunction.monitor",
-    "productName": "Agent Junction Monitor",
+    "productName": "agent-junction-monitor",
     "files": [
       "dist/**/*",
       "dist-electron/**/*"
     ],
+    "directories": {
+      "output": "release"
+    },
     "linux": {
       "target": ["deb"],
       "category": "Development;Utility",
       "icon": "build/icons",
+      "executableName": "agent-junction-monitor",
       "desktop": {
         "Name": "Agent Junction Monitor",
         "Comment": "Real-time monitor for Agent Junction inter-agent communication",
@@ -52,7 +56,8 @@
       }
     },
     "deb": {
-      "depends": ["libnotify4", "libappindicator3-1", "libsecret-1-0"]
+      "depends": ["libnotify4", "libappindicator3-1", "libsecret-1-0"],
+      "packageName": "agent-junction-monitor"
     }
   }
 }
