@@ -2,6 +2,12 @@
   "name": "agent-junction-monitor",
   "version": "0.1.0",
   "private": true,
+  "description": "Real-time desktop monitor for Agent Junction inter-agent communication",
+  "author": {
+    "name": "Daniel Rosehill",
+    "email": "public@danielrosehill.com"
+  },
+  "homepage": "https://github.com/danielrosehill/Agent-Junction",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -32,6 +38,21 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*"
-    ]
+    ],
+    "linux": {
+      "target": ["deb"],
+      "category": "Development;Utility",
+      "icon": "build/icons",
+      "desktop": {
+        "Name": "Agent Junction Monitor",
+        "Comment": "Real-time monitor for Agent Junction inter-agent communication",
+        "Terminal": "false",
+        "Type": "Application",
+        "Categories": "Development;Utility"
+      }
+    },
+    "deb": {
+      "depends": ["libnotify4", "libappindicator3-1", "libsecret-1-0"]
+    }
   }
 }
