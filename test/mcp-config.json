@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "agent-junction-test": {
+      "type": "url",
+      "url": "http://127.0.0.1:4299/mcp"
+    }
+  }
+}
